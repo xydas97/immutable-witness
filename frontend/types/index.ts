@@ -25,7 +25,6 @@ export interface GdeltEvent {
 
 export type ProofType = 'file' | 'url' | 'testimony'
 
-export type ProofStatus = 'verified' | 'unconfirmed' | 'blocked'
 
 export interface WitnessProof {
   blobId: string
@@ -38,7 +37,6 @@ export interface WitnessProof {
   sourceUrl?: string
   epoch: number
   timestamp: string
-  status: ProofStatus
 }
 
 export interface PatchRecord {
@@ -71,7 +69,6 @@ export interface EventFilter {
 export interface RelevanceResult {
   score: number
   reason: string
-  status: ProofStatus
 }
 
 // --- Storage ---
@@ -83,17 +80,20 @@ export interface StorageEstimate {
 
 // --- On-chain record types (mirroring Move structs) ---
 
+export interface OnChainProof {
+  blobId: string
+  contentHash: string
+  submitter: string
+  relevanceScore: number
+  proofType: ProofType
+  description: string
+  sourceUrl: string
+  timestamp: number
+}
+
 export interface IncidentRecord {
   id: string
-  eventId: string
-  title: string
-  location: string
-  lat: number
-  lng: number
-  timestamp: number
-  category: string
-  severity: number
-  sourceUrl: string
+  gdeltEventId: string
   proofCount: number
 }
 
