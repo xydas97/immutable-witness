@@ -1,0 +1,60 @@
+{
+  "name": "immutable-witness",
+  "version": "1.0.0",
+  "description": "An on-chain evidence archival platform that permanently preserves proof of real-world conflict events.",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "format": "prettier --write ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xydas97/immutable-witness.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xydas97/immutable-witness/issues"
+  },
+  "homepage": "https://github.com/xydas97/immutable-witness#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@mysten/dapp-kit": "^1.0.3",
+    "@mysten/sui": "^2.5.1",
+    "@tanstack/react-query": "^5.90.21",
+    "leaflet": "^1.9.4",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^15.0.0",
+    "react-leaflet": "^4.2.1",
+    "react-leaflet-cluster": "^2.1.0",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^25.3.3",
+    "@types/react": "^18.3.28",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "jest": "^30.2.0",
+    "postcss": "^8.5.8",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^3.4.19",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
+  }
+}
