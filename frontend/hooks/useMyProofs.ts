@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 import type { WitnessProof } from '@/types'
-import { MOCK_PROOFS } from '@/lib/mockData'
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || ''
 
@@ -26,8 +25,7 @@ export function useMyProofs() {
     queryKey: ['my-proofs', account?.address],
     queryFn: async (): Promise<WitnessProof[]> => {
       if (!CONTRACT_ADDRESS || !account?.address) {
-        // Contract not deployed — return mock data
-        return MOCK_PROOFS.map((p) => ({ ...p, submitterAddress: account?.address ?? p.submitterAddress }))
+        return []
       }
 
       const eventType = `${CONTRACT_ADDRESS}::immutable_witness::ProofSubmitted`
@@ -62,11 +60,6 @@ export function useMyProofs() {
 
         cursor = nextCursor
         hasMore = hasNextPage
-      }
-
-      // If no on-chain proofs found, return mock data for demo purposes
-      if (allProofs.length === 0) {
-        return MOCK_PROOFS.map((p) => ({ ...p, submitterAddress: account.address }))
       }
 
       return allProofs

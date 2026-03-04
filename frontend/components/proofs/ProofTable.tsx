@@ -13,9 +13,10 @@ const TYPE_ICONS: Record<string, string> = {
 interface ProofTableProps {
   proofs: WitnessProof[]
   onExtend: (proof: WitnessProof) => void
+  onView: (proof: WitnessProof) => void
 }
 
-export function ProofTable({ proofs, onExtend }: ProofTableProps) {
+export function ProofTable({ proofs, onExtend, onView }: ProofTableProps) {
   const [page, setPage] = useState(0)
   const pageSize = 10
   const totalPages = Math.ceil(proofs.length / pageSize)
@@ -29,10 +30,6 @@ export function ProofTable({ proofs, onExtend }: ProofTableProps) {
 
   function handleVerify(proof: WitnessProof) {
     toast.success(`Blob ${proof.blobId.slice(0, 8)}… verified on Walrus`)
-  }
-
-  function handleView(proof: WitnessProof) {
-    toast.info(`Viewing blob ${proof.blobId.slice(0, 8)}…`)
   }
 
   if (proofs.length === 0) {
@@ -62,7 +59,7 @@ export function ProofTable({ proofs, onExtend }: ProofTableProps) {
                 Status
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">
-                Epoch
+                Blob
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">
                 Date
@@ -92,7 +89,17 @@ export function ProofTable({ proofs, onExtend }: ProofTableProps) {
                     {status.label}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-text-muted">{proof.epoch}</td>
+                <td className="px-4 py-3">
+                  <a
+                    href={`https://walruscan.com/testnet/blob/${proof.blobId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs text-teal hover:underline"
+                    title={proof.blobId}
+                  >
+                    {proof.blobId.slice(0, 8)}…
+                  </a>
+                </td>
                 <td className="px-4 py-3 text-text-muted">
                   {new Date(proof.timestamp).toLocaleDateString()}
                 </td>
@@ -111,7 +118,7 @@ export function ProofTable({ proofs, onExtend }: ProofTableProps) {
                       Extend
                     </button>
                     <button
-                      onClick={() => handleView(proof)}
+                      onClick={() => onView(proof)}
                       className="rounded px-2 py-1 text-xs text-text-muted hover:bg-white/10"
                     >
                       View

@@ -16,9 +16,10 @@ function statusFromScore(score: number) {
 
 interface ProofListProps {
   proofs: WitnessProof[]
+  onView?: (proof: WitnessProof) => void
 }
 
-export function ProofList({ proofs }: ProofListProps) {
+export function ProofList({ proofs, onView }: ProofListProps) {
   if (proofs.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-text-muted">
@@ -55,7 +56,22 @@ export function ProofList({ proofs }: ProofListProps) {
               <span>
                 {proof.submitterAddress.slice(0, 6)}…{proof.submitterAddress.slice(-4)}
               </span>
-              <span>{new Date(proof.timestamp).toLocaleDateString()}</span>
+              <a
+                href={`https://walruscan.com/testnet/blob/${proof.blobId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal hover:underline"
+              >
+                Explorer
+              </a>
+              {onView && (
+                <button
+                  onClick={() => onView(proof)}
+                  className="text-teal hover:underline"
+                >
+                  View
+                </button>
+              )}
             </div>
           </div>
         )

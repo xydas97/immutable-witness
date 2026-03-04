@@ -7,6 +7,7 @@ import { PageShell } from '@/components/layout/PageShell'
 import { StatsBar } from '@/components/proofs/StatsBar'
 import { ProofTable } from '@/components/proofs/ProofTable'
 import { EpochExtensionModal } from '@/components/proofs/EpochExtensionModal'
+import { ProofViewerModal } from '@/components/proofs/ProofViewerModal'
 import { Spinner } from '@/components/ui/Spinner'
 import type { WitnessProof } from '@/types'
 
@@ -14,6 +15,7 @@ export default function MyProofsPage() {
   const account = useCurrentAccount()
   const { data: proofs, isLoading, isError } = useMyProofs()
   const [extendProof, setExtendProof] = useState<WitnessProof | null>(null)
+  const [viewProof, setViewProof] = useState<WitnessProof | null>(null)
 
   if (!account) {
     return (
@@ -59,7 +61,7 @@ export default function MyProofsPage() {
 
         <StatsBar proofs={proofs ?? []} />
 
-        <ProofTable proofs={proofs ?? []} onExtend={setExtendProof} />
+        <ProofTable proofs={proofs ?? []} onExtend={setExtendProof} onView={setViewProof} />
       </div>
 
       {extendProof && (
@@ -69,6 +71,12 @@ export default function MyProofsPage() {
           onClose={() => setExtendProof(null)}
         />
       )}
+
+      <ProofViewerModal
+        proof={viewProof}
+        isOpen={!!viewProof}
+        onClose={() => setViewProof(null)}
+      />
     </PageShell>
   )
 }

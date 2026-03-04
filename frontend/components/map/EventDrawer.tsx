@@ -1,8 +1,10 @@
 'use client'
 
-import type { GdeltEvent } from '@/types'
+import { useState } from 'react'
+import type { GdeltEvent, WitnessProof } from '@/types'
 import { useProofsForEvent } from '@/hooks/useProofsForEvent'
 import { ProofList } from './ProofList'
+import { ProofViewerModal } from '@/components/proofs/ProofViewerModal'
 import { Spinner } from '@/components/ui/Spinner'
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -20,6 +22,7 @@ interface EventDrawerProps {
 
 export function EventDrawer({ event, onClose, onSubmitProof }: EventDrawerProps) {
   const { data: proofs, isLoading } = useProofsForEvent(event?.id ?? null)
+  const [viewProof, setViewProof] = useState<WitnessProof | null>(null)
 
   return (
     <>
@@ -100,7 +103,7 @@ export function EventDrawer({ event, onClose, onSubmitProof }: EventDrawerProps)
                   <Spinner size="md" />
                 </div>
               ) : (
-                <ProofList proofs={proofs ?? []} />
+                <ProofList proofs={proofs ?? []} onView={setViewProof} />
               )}
             </div>
 
@@ -116,6 +119,12 @@ export function EventDrawer({ event, onClose, onSubmitProof }: EventDrawerProps)
           </div>
         )}
       </div>
+
+      <ProofViewerModal
+        proof={viewProof}
+        isOpen={!!viewProof}
+        onClose={() => setViewProof(null)}
+      />
     </>
   )
 }

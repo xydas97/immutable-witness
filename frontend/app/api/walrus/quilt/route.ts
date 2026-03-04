@@ -80,8 +80,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate a quilt ID from the combined patch blob IDs
-    const quiltId = `quilt-${patches.map((p) => p.blobId.slice(0, 6)).join('-')}`
+    // Upload a JSON manifest as a Walrus blob — its blobId becomes the quiltId
+    const manifest = JSON.stringify({
+      type: 'quilt',
+      patches: patches.map((p) => ({
+        blobId: p.blobId,
+        filename: p.filename,
+        mimeType: p.mimeType,
+        size: p.size,
+      })),
+    })
+
+    const manifestRes = await fetch(`${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`, {
+      method: 'PUT',
+      body: new TextEncoder().encode(manifest),
+      headers: { 'Content-Type': 'application/octet-stream' },
+    })
+
+    if (!manifestRes.ok) {
+      return NextResponse.json(
+        { error: 'Failed to upload quilt manifest' },
+        { status: 502 },
+      )
+    }
+
+    const manifestResult = await manifestRes.json()
+    let quiltId: string
+    if (manifestResult.newlyCreated) {
+      quiltId = manifestResult.newlyCreated.blobObject.blobId
+    } else if (manifestResult.alreadyCertified) {
+      quiltId = manifestResult.alreadyCertified.blobId
+    } else {
+      return NextResponse.json(
+        { error: 'Unexpected manifest upload response' },
+        { status: 502 },
+      )
+    }
 
     console.log(`[Walrus Quilt] Complete: ${patches.length}/${files.length} patches, quiltId: ${quiltId}`)
 

@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useSuiClient } from '@mysten/dapp-kit'
 import type { WitnessProof } from '@/types'
-import { getMockProofsForEvent } from '@/lib/mockData'
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || ''
 
@@ -25,7 +24,7 @@ export function useProofsForEvent(eventId: string | null) {
     queryKey: ['proofs', eventId],
     queryFn: async (): Promise<WitnessProof[]> => {
       if (!CONTRACT_ADDRESS || !eventId) {
-        return getMockProofsForEvent(eventId ?? '')
+        return []
       }
 
       const eventType = `${CONTRACT_ADDRESS}::immutable_witness::ProofSubmitted`
@@ -60,11 +59,6 @@ export function useProofsForEvent(eventId: string | null) {
 
         cursor = nextCursor
         hasMore = hasNextPage
-      }
-
-      // Fall back to mock if no on-chain proofs found
-      if (allProofs.length === 0) {
-        return getMockProofsForEvent(eventId)
       }
 
       return allProofs

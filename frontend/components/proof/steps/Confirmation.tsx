@@ -32,6 +32,7 @@ export function Confirmation({ blobId, contentHash, txDigest }: ConfirmationProp
           label="Blob ID"
           value={blobId}
           onCopy={() => copyToClipboard(blobId, 'Blob ID')}
+          link={`https://walruscan.com/testnet/blob/${blobId}`}
         />
         <InfoRow
           label="Content Hash"
