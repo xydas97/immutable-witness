@@ -1,11 +1,13 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useEvents } from '@/hooks/useEvents'
 import { PageShell } from '@/components/layout/PageShell'
+import { FilterPanel } from '@/components/map/FilterPanel'
+import { FilterChips } from '@/components/map/FilterChips'
 import { Spinner } from '@/components/ui/Spinner'
-import type { GdeltEvent } from '@/types'
+import type { EventFilter, GdeltEvent } from '@/types'
 
 const EventMap = dynamic(() => import('@/components/map/EventMap').then((m) => m.EventMap), {
   ssr: false,
@@ -17,8 +19,20 @@ const EventMap = dynamic(() => import('@/components/map/EventMap').then((m) => m
 })
 
 export default function MapPage() {
-  const { events, isLoading, isError } = useEvents()
+  const [filter, setFilter] = useState<Partial<EventFilter>>({})
+  const [filterOpen, setFilterOpen] = useState(false)
+  const { events, allEvents, isLoading, isError } = useEvents(filter)
   const [selectedEvent, setSelectedEvent] = useState<GdeltEvent | null>(null)
+
+  const availableCountries = useMemo(
+    () => Array.from(new Set(allEvents.map((e) => e.country))).sort(),
+    [allEvents],
+  )
+
+  const availableEventCodes = useMemo(
+    () => Array.from(new Set(allEvents.map((e) => e.eventDescription))).sort(),
+    [allEvents],
+  )
 
   function handleEventClick(event: GdeltEvent) {
     setSelectedEvent(event)
@@ -45,6 +59,17 @@ export default function MapPage() {
             {isLoading ? 'loading…' : events.length === 1 ? 'event' : 'events'}
           </span>
         </div>
+
+        <FilterPanel
+          filter={filter}
+          onFilterChange={setFilter}
+          availableCountries={availableCountries}
+          availableEventCodes={availableEventCodes}
+          isOpen={filterOpen}
+          onToggle={() => setFilterOpen((o) => !o)}
+        />
+
+        <FilterChips filter={filter} onFilterChange={setFilter} />
 
         <EventMap events={events} onEventClick={handleEventClick} />
       </div>

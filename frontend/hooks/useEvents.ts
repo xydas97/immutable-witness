@@ -17,7 +17,11 @@ function applyFilters(events: GdeltEvent[], filter: Partial<EventFilter>): Gdelt
     if (filter.countries?.length && !filter.countries.includes(event.country)) {
       return false
     }
-    if (filter.eventCodes?.length && !filter.eventCodes.includes(event.eventCode)) {
+    if (
+      filter.eventCodes?.length &&
+      !filter.eventCodes.includes(event.eventCode) &&
+      !filter.eventCodes.includes(event.eventDescription)
+    ) {
       return false
     }
     if (filter.timeRange) {
