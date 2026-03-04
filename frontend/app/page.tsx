@@ -6,6 +6,7 @@ import { useEvents } from '@/hooks/useEvents'
 import { PageShell } from '@/components/layout/PageShell'
 import { FilterPanel } from '@/components/map/FilterPanel'
 import { FilterChips } from '@/components/map/FilterChips'
+import { EventDrawer } from '@/components/map/EventDrawer'
 import { Spinner } from '@/components/ui/Spinner'
 import type { EventFilter, GdeltEvent } from '@/types'
 
@@ -36,7 +37,10 @@ export default function MapPage() {
 
   function handleEventClick(event: GdeltEvent) {
     setSelectedEvent(event)
-    // TODO: Open EventDrawer (E2-05)
+  }
+
+  function handleSubmitProof(_event: GdeltEvent) {
+    // TODO: Open ProofSubmissionModal (E2-06)
   }
 
   if (isError) {
@@ -72,6 +76,12 @@ export default function MapPage() {
         <FilterChips filter={filter} onFilterChange={setFilter} />
 
         <EventMap events={events} onEventClick={handleEventClick} />
+
+        <EventDrawer
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onSubmitProof={handleSubmitProof}
+        />
       </div>
     </PageShell>
   )
