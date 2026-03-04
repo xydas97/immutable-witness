@@ -5,6 +5,9 @@ import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
 import type { WitnessProof } from '@/types'
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || ''
+const WALRUS_AGGREGATOR_URL =
+  process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL ||
+  'https://aggregator.walrus-testnet.walrus.space'
 
 interface ProofSubmittedEvent {
   gdelt_event_id: string
@@ -15,6 +18,26 @@ interface ProofSubmittedEvent {
   proof_type: string
   description: string
   timestamp: string
+}
+
+/** Fetch blob metadata (size, content-type) via HEAD request to Walrus aggregator */
+async function fetchBlobMetadata(
+  blobId: string,
+): Promise<{ size?: number; mimeType?: string }> {
+  try {
+    const res = await fetch(`${WALRUS_AGGREGATOR_URL}/v1/blobs/${blobId}`, {
+      method: 'HEAD',
+    })
+    if (!res.ok) return {}
+    const contentLength = res.headers.get('content-length')
+    const contentType = res.headers.get('content-type') || undefined
+    return {
+      size: contentLength ? Number(contentLength) : undefined,
+      mimeType: contentType,
+    }
+  } catch {
+    return {}
+  }
 }
 
 export function useMyProofs() {
@@ -62,7 +85,45 @@ export function useMyProofs() {
         hasMore = hasNextPage
       }
 
-      return allProofs
+      // Enrich proofs with real blob metadata from Walrus aggregator
+      const enriched = await Promise.all(
+        allProofs.map(async (proof) => {
+          const meta = await fetchBlobMetadata(proof.blobId)
+          return {
+            ...proof,
+            size: meta.size,
+            mimeType: meta.mimeType,
+          }
+        }),
+      )
+
+      // Enrich proofs with endEpoch from Walrus blob status
+      if (enriched.length > 0) {
+        try {
+          const blobIds = enriched.map((p) => p.blobId)
+          const res = await fetch('/api/walrus/blob-info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blobIds }),
+          })
+          if (res.ok) {
+            const infos: { blobId: string; endEpoch: number | null }[] = await res.json()
+            const endEpochMap = new Map(
+              infos.filter((i) => i.endEpoch !== null).map((i) => [i.blobId, i.endEpoch!]),
+            )
+            for (const proof of enriched) {
+              const endEpoch = endEpochMap.get(proof.blobId)
+              if (endEpoch !== undefined) {
+                proof.endEpoch = endEpoch
+              }
+            }
+          }
+        } catch {
+          // Non-blocking — endEpoch enrichment failure doesn't break the page
+        }
+      }
+
+      return enriched
     },
     enabled: !!account?.address,
     staleTime: 5 * 60 * 1000,

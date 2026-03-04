@@ -1,6 +1,10 @@
 'use client'
 
 import { estimateStorageCost } from '@/lib/walrus'
+import { useWalrusEpoch } from '@/hooks/useWalrusEpoch'
+
+const EPOCH_DURATION_LABEL =
+  process.env.NEXT_PUBLIC_SUI_NETWORK === 'mainnet' ? '2 weeks' : '1 day'
 
 interface StorageEstimateProps {
   totalBytes: number
@@ -9,6 +13,8 @@ interface StorageEstimateProps {
 }
 
 export function StorageEstimate({ totalBytes, epochs, onEpochsChange }: StorageEstimateProps) {
+  const { data: epochInfo } = useWalrusEpoch()
+  const maxEpochsAhead = epochInfo?.maxEpochsAhead ?? 53
   const { estimatedCostSui: cost } = estimateStorageCost(totalBytes, epochs)
 
   return (
@@ -39,25 +45,29 @@ export function StorageEstimate({ totalBytes, epochs, onEpochsChange }: StorageE
         <div className="mt-4">
           <label className="mb-2 flex items-center justify-between text-sm">
             <span>Storage Epochs</span>
-            <span className="text-text-muted">{epochs} epoch{epochs !== 1 ? 's' : ''}</span>
+            <span className="text-text-muted">
+              {epochs} epoch{epochs !== 1 ? 's' : ''}{' '}
+              <span className="text-xs">({EPOCH_DURATION_LABEL} each)</span>
+            </span>
           </label>
           <input
             type="range"
             min={1}
-            max={200}
-            value={epochs}
+            max={maxEpochsAhead}
+            value={Math.min(epochs, maxEpochsAhead)}
             onChange={(e) => onEpochsChange(Number(e.target.value))}
             className="w-full accent-teal"
           />
           <div className="flex justify-between text-xs text-text-muted">
             <span>1 epoch</span>
-            <span>200 epochs</span>
+            <span>{maxEpochsAhead} epochs (max)</span>
           </div>
         </div>
       </div>
 
       <p className="text-xs text-text-muted">
-        Evidence is stored immutably on Walrus. Once uploaded, it cannot be deleted or modified.
+        Evidence is stored permanently on Walrus (non-deletable). Storage duration can be extended
+        later.
       </p>
     </div>
   )

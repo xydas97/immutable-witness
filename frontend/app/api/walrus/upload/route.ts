@@ -20,11 +20,15 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer()
     console.log(`[Walrus] Uploading blob, size: ${arrayBuffer.byteLength} bytes, epochs: ${epochs}`)
 
-    const response = await fetch(`${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`, {
-      method: 'PUT',
-      body: arrayBuffer,
-      headers: { 'Content-Type': 'application/octet-stream' },
-    })
+    // permanent=true ensures blob is non-deletable (since Walrus v1.33 default is deletable)
+    const response = await fetch(
+      `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}&permanent=true`,
+      {
+        method: 'PUT',
+        body: arrayBuffer,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      },
+    )
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -39,17 +43,26 @@ export async function POST(request: NextRequest) {
 
     let blobId: string
     let cost: number | undefined
+    let endEpoch: number | undefined
+    let startEpoch: number | undefined
+    let size: number | undefined
+
     if (result.newlyCreated) {
-      blobId = result.newlyCreated.blobObject.blobId
+      const blob = result.newlyCreated.blobObject
+      blobId = blob.blobId
       cost = result.newlyCreated.cost
+      endEpoch = blob.storage?.endEpoch
+      startEpoch = blob.storage?.startEpoch
+      size = blob.size
     } else if (result.alreadyCertified) {
       blobId = result.alreadyCertified.blobId
+      endEpoch = result.alreadyCertified.endEpoch
     } else {
       return NextResponse.json({ error: 'Unexpected Walrus response' }, { status: 502 })
     }
 
-    console.log(`[Walrus] Blob uploaded: ${blobId}`)
-    return NextResponse.json({ blobId, cost })
+    console.log(`[Walrus] Blob uploaded: ${blobId}, endEpoch: ${endEpoch}, size: ${size}`)
+    return NextResponse.json({ blobId, cost, endEpoch, startEpoch, size })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Upload failed'
     console.error('[Walrus] Upload failed:', msg)

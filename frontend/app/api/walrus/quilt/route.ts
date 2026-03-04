@@ -35,11 +35,14 @@ export async function POST(request: NextRequest) {
       try {
         const arrayBuffer = await file.arrayBuffer()
 
-        const response = await fetch(`${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`, {
-          method: 'PUT',
-          body: arrayBuffer,
-          headers: { 'Content-Type': 'application/octet-stream' },
-        })
+        const response = await fetch(
+          `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}&permanent=true`,
+          {
+            method: 'PUT',
+            body: arrayBuffer,
+            headers: { 'Content-Type': 'application/octet-stream' },
+          },
+        )
 
         if (!response.ok) {
           errors.push(`Failed to upload ${file.name}: HTTP ${response.status}`)
@@ -91,11 +94,14 @@ export async function POST(request: NextRequest) {
       })),
     })
 
-    const manifestRes = await fetch(`${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`, {
-      method: 'PUT',
-      body: new TextEncoder().encode(manifest),
-      headers: { 'Content-Type': 'application/octet-stream' },
-    })
+    const manifestRes = await fetch(
+      `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}&permanent=true`,
+      {
+        method: 'PUT',
+        body: new TextEncoder().encode(manifest),
+        headers: { 'Content-Type': 'application/octet-stream' },
+      },
+    )
 
     if (!manifestRes.ok) {
       return NextResponse.json(
