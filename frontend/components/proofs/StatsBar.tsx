@@ -8,7 +8,7 @@ interface StatsBarProps {
 
 export function StatsBar({ proofs }: StatsBarProps) {
   const totalProofs = proofs.length
-  const verified = proofs.filter((p) => p.status === 'verified').length
+  const verified = proofs.filter((p) => p.relevanceScore >= 75).length
   const expiringSoon = proofs.filter((p) => p.epoch < 60).length // mock: epochs < 60 are "expiring"
   // Mock storage calculation: ~50KB per proof
   const storageUsed = totalProofs * 50

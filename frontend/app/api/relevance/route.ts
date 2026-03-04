@@ -18,7 +18,6 @@ export async function POST(request: Request) {
     return NextResponse.json<RelevanceResult>({
       score: 75,
       reason: 'Mock score — configure ANTHROPIC_API_KEY for real AI relevance analysis.',
-      status: 'unconfirmed',
     })
   }
 
@@ -31,7 +30,7 @@ Location: ${body.eventLocation}
 Submitted proof description: "${body.proofDescription}"
 ${body.proofUrl ? `Proof URL: ${body.proofUrl}` : ''}
 
-Respond with JSON only: {"score": <number 0-100>, "reason": "<1-2 sentence explanation>", "status": "<verified|unconfirmed|blocked>"}`
+Respond with JSON only: {"score": <number 0-100>, "reason": "<1-2 sentence explanation>"}`
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -51,7 +50,6 @@ Respond with JSON only: {"score": <number 0-100>, "reason": "<1-2 sentence expla
       return NextResponse.json<RelevanceResult>({
         score: 65,
         reason: 'Relevance API unavailable — returning estimated score.',
-        status: 'unconfirmed',
       })
     }
 
@@ -63,7 +61,6 @@ Respond with JSON only: {"score": <number 0-100>, "reason": "<1-2 sentence expla
     return NextResponse.json<RelevanceResult>({
       score: 65,
       reason: 'Failed to parse AI response — returning estimated score.',
-      status: 'unconfirmed',
     })
   }
 }

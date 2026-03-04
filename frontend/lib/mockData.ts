@@ -275,7 +275,6 @@ export const MOCK_PROOFS: WitnessProof[] = [
     sourceUrl: 'https://sentinel-hub.com',
     epoch: 5,
     timestamp: '2026-03-03T15:00:00Z',
-    status: 'verified',
   },
   {
     blobId: 'wal_8y4g0b3c2d5e6f7891bcdefg234567',
@@ -287,7 +286,6 @@ export const MOCK_PROOFS: WitnessProof[] = [
     description: 'Eyewitness account from local journalist documenting the clashes',
     epoch: 5,
     timestamp: '2026-03-03T16:30:00Z',
-    status: 'verified',
   },
   {
     blobId: 'wal_9z5h1c4d3e6f7892cdefgh345678',
@@ -299,7 +297,6 @@ export const MOCK_PROOFS: WitnessProof[] = [
     description: 'Photo of damaged building in Kharkiv residential district',
     epoch: 10,
     timestamp: '2026-03-03T09:00:00Z',
-    status: 'verified',
   },
   {
     blobId: 'wal_0a6i2d5e4f7g8903defghi456789',
@@ -312,7 +309,6 @@ export const MOCK_PROOFS: WitnessProof[] = [
     sourceUrl: 'https://www.aljazeera.com/news/2026/3/3/gaza-hospital',
     epoch: 3,
     timestamp: '2026-03-03T12:15:00Z',
-    status: 'unconfirmed',
   },
 ]
 

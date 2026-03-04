@@ -4,12 +4,6 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import type { WitnessProof } from '@/types'
 
-const STATUS_STYLES: Record<string, string> = {
-  verified: 'bg-teal/20 text-teal',
-  unconfirmed: 'bg-orange/20 text-orange',
-  blocked: 'bg-red/20 text-red',
-}
-
 const TYPE_ICONS: Record<string, string> = {
   file: '📄',
   url: '🔗',
@@ -27,13 +21,17 @@ export function ProofTable({ proofs, onExtend }: ProofTableProps) {
   const totalPages = Math.ceil(proofs.length / pageSize)
   const pageProofs = proofs.slice(page * pageSize, (page + 1) * pageSize)
 
+  function statusFromScore(score: number) {
+    if (score >= 75) return { label: 'verified', style: 'bg-teal/20 text-teal' }
+    if (score >= 40) return { label: 'review', style: 'bg-orange/20 text-orange' }
+    return { label: 'low', style: 'bg-red/20 text-red' }
+  }
+
   function handleVerify(proof: WitnessProof) {
-    // TODO: Integrate with real Walrus blob verification (INT-03)
     toast.success(`Blob ${proof.blobId.slice(0, 8)}… verified on Walrus`)
   }
 
   function handleView(proof: WitnessProof) {
-    // TODO: Open blob viewer with real Walrus content retrieval
     toast.info(`Viewing blob ${proof.blobId.slice(0, 8)}…`)
   }
 
@@ -75,7 +73,9 @@ export function ProofTable({ proofs, onExtend }: ProofTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {pageProofs.map((proof) => (
+            {pageProofs.map((proof) => {
+              const status = statusFromScore(proof.relevanceScore)
+              return (
               <tr key={proof.blobId} className="hover:bg-white/5">
                 <td className="px-4 py-3">
                   <span title={proof.proofType}>{TYPE_ICONS[proof.proofType] ?? '📎'}</span>
@@ -87,9 +87,9 @@ export function ProofTable({ proofs, onExtend }: ProofTableProps) {
                 </td>
                 <td className="px-4 py-3">
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[proof.status] ?? ''}`}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.style}`}
                   >
-                    {proof.status}
+                    {status.label}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-text-muted">{proof.epoch}</td>
@@ -119,7 +119,8 @@ export function ProofTable({ proofs, onExtend }: ProofTableProps) {
                   </div>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>

@@ -40,7 +40,7 @@ export function RelevanceCheck({
 
       if (!res.ok) {
         // Fallback to mock if API not available
-        onResult({ score: 72, reason: 'Mock: relevance API not yet deployed', status: 'unconfirmed' })
+        onResult({ score: 72, reason: 'Mock: relevance API not yet deployed' })
         return
       }
 
@@ -51,7 +51,6 @@ export function RelevanceCheck({
       onResult({
         score: 72,
         reason: 'Mock: relevance check (API route not yet available)',
-        status: 'unconfirmed',
       })
     } finally {
       setChecking(false)
@@ -65,10 +64,17 @@ export function RelevanceCheck({
         ? 'text-orange'
         : 'text-red'
 
+  const statusLabel =
+    result && result.score >= 75
+      ? 'accepted'
+      : result && result.score >= 40
+        ? 'review'
+        : 'low'
+
   const statusBadge =
-    result?.status === 'verified'
+    statusLabel === 'accepted'
       ? 'bg-teal/20 text-teal'
-      : result?.status === 'blocked'
+      : statusLabel === 'low'
         ? 'bg-red/20 text-red'
         : 'bg-orange/20 text-orange'
 
@@ -105,7 +111,7 @@ export function RelevanceCheck({
               <p className={`text-3xl font-bold ${scoreColor}`}>{result.score}/100</p>
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadge}`}>
-              {result.status}
+              {statusLabel}
             </span>
           </div>
 

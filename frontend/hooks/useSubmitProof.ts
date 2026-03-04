@@ -81,9 +81,11 @@ export function useSubmitProof({ onPhase }: UseSubmitProofOptions = {}) {
               tx.pure.string(params.eventId),
               tx.pure.string(blobId),
               tx.pure.string(contentHash),
+              tx.pure.u8(Math.min(params.relevanceScore, 100)),
               tx.pure.string(params.proofType),
               tx.pure.string(params.description.slice(0, 256)),
-              tx.pure.u64(params.relevanceScore),
+              tx.pure.string(params.url || ''),
+              tx.pure.u64(Date.now()),
             ],
           })
 
