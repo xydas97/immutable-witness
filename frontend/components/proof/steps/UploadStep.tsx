@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Spinner } from '@/components/ui/Spinner'
+import { uploadBlob, uploadQuilt, hashFile, hashBytes } from '@/lib/walrus'
 
 interface UploadResult {
   blobId: string
@@ -12,46 +13,65 @@ interface UploadResult {
 interface UploadStepProps {
   files: File[]
   description: string
+  epochs: number
   result: UploadResult | null
   onResult: (result: UploadResult) => void
 }
 
-type UploadPhase = 'hashing' | 'uploading' | 'signing' | 'confirming' | 'done'
+type UploadPhase = 'hashing' | 'uploading' | 'confirming' | 'done'
 
 const PHASE_LABELS: Record<UploadPhase, string> = {
   hashing: 'Computing SHA-256 hash…',
   uploading: 'Uploading to Walrus…',
-  signing: 'Signing Sui transaction…',
-  confirming: 'Confirming on-chain…',
+  confirming: 'Finalizing…',
   done: 'Complete!',
 }
 
-// Mock upload flow — replace with real Walrus + Sui integration (INT-03)
-async function mockUpload(
+async function realUpload(
+  files: File[],
+  description: string,
+  epochs: number,
   onPhase: (phase: UploadPhase) => void,
 ): Promise<UploadResult> {
+  // Phase 1: Hash all content
   onPhase('hashing')
-  await new Promise((r) => setTimeout(r, 1000))
+  let contentHash: string
+  if (files.length > 0) {
+    contentHash = await hashFile(files[0])
+  } else {
+    contentHash = await hashBytes(new TextEncoder().encode(description))
+  }
 
+  // Phase 2: Upload to Walrus
   onPhase('uploading')
-  await new Promise((r) => setTimeout(r, 2000))
+  let blobId: string
 
-  onPhase('signing')
-  await new Promise((r) => setTimeout(r, 1500))
+  if (files.length > 1) {
+    // Multi-file: use quilt upload
+    const quiltResult = await uploadQuilt(files, epochs)
+    blobId = quiltResult.quiltId
+  } else if (files.length === 1) {
+    // Single file upload
+    const result = await uploadBlob(files[0], epochs)
+    blobId = result.blobId
+  } else {
+    // Text-only proof: upload description as blob
+    const blob = new Blob([description], { type: 'text/plain' })
+    const file = new File([blob], 'testimony.txt', { type: 'text/plain' })
+    const result = await uploadBlob(file, epochs)
+    blobId = result.blobId
+  }
 
+  // Phase 3: Confirm
   onPhase('confirming')
-  await new Promise((r) => setTimeout(r, 1000))
+  // On-chain registration will be added when smart contract is deployed
+  const txDigest = `walrus_${blobId.slice(0, 16)}`
 
   onPhase('done')
-
-  return {
-    blobId: 'mock_' + Math.random().toString(36).slice(2, 10),
-    contentHash: 'sha256:' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-    txDigest: 'mock_tx_' + Math.random().toString(36).slice(2, 14),
-  }
+  return { blobId, contentHash, txDigest }
 }
 
-export function UploadStep({ files, description, result, onResult }: UploadStepProps) {
+export function UploadStep({ files, description, epochs, result, onResult }: UploadStepProps) {
   const [phase, setPhase] = useState<UploadPhase | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [started, setStarted] = useState(false)
@@ -60,23 +80,21 @@ export function UploadStep({ files, description, result, onResult }: UploadStepP
     if (started || result) return
 
     setStarted(true)
-    mockUpload(setPhase)
+    realUpload(files, description, epochs, setPhase)
       .then(onResult)
       .catch((err: Error) => setError(err.message))
-  }, [started, result, onResult])
+  }, [started, result, onResult, files, description, epochs])
 
   const progress =
     phase === 'hashing'
-      ? 20
+      ? 25
       : phase === 'uploading'
-        ? 50
-        : phase === 'signing'
-          ? 75
-          : phase === 'confirming'
-            ? 90
-            : phase === 'done'
-              ? 100
-              : 0
+        ? 60
+        : phase === 'confirming'
+          ? 90
+          : phase === 'done'
+            ? 100
+            : 0
 
   return (
     <div className="space-y-4">

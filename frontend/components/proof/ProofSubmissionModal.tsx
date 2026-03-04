@@ -172,6 +172,7 @@ export function ProofSubmissionModal({ event, isOpen, onClose }: ProofSubmission
               <UploadStep
                 files={files}
                 description={description}
+                epochs={epochs}
                 result={uploadResult}
                 onResult={handleUploadResult}
               />

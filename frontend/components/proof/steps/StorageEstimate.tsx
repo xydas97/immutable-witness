@@ -1,19 +1,15 @@
 'use client'
 
+import { estimateStorageCost } from '@/lib/walrus'
+
 interface StorageEstimateProps {
   totalBytes: number
   epochs: number
   onEpochsChange: (epochs: number) => void
 }
 
-// Mock cost calculation: ~0.001 SUI per MB per epoch
-function estimateCost(bytes: number, epochs: number): number {
-  const mb = bytes / (1024 * 1024)
-  return Math.max(0.001, mb * 0.001 * epochs)
-}
-
 export function StorageEstimate({ totalBytes, epochs, onEpochsChange }: StorageEstimateProps) {
-  const cost = estimateCost(totalBytes, epochs)
+  const { estimatedCostSui: cost } = estimateStorageCost(totalBytes, epochs)
 
   return (
     <div className="space-y-4">
