@@ -168,10 +168,14 @@ export function ProofSubmissionModal({ event, isOpen, onClose }: ProofSubmission
                 onEpochsChange={setEpochs}
               />
             )}
-            {step === 4 && (
+            {step === 4 && proofType && (
               <UploadStep
                 files={files}
                 description={description}
+                url={url}
+                proofType={proofType}
+                eventId={event.id}
+                relevanceScore={relevanceResult?.score ?? 0}
                 epochs={epochs}
                 result={uploadResult}
                 onResult={handleUploadResult}

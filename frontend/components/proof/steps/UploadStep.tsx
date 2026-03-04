@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Spinner } from '@/components/ui/Spinner'
-import { uploadBlob, uploadQuilt, hashFile, hashBytes } from '@/lib/walrus'
+import { useSubmitProof } from '@/hooks/useSubmitProof'
+import type { ProofType } from '@/types'
 
 interface UploadResult {
   blobId: string
@@ -13,88 +14,70 @@ interface UploadResult {
 interface UploadStepProps {
   files: File[]
   description: string
+  url: string
+  proofType: ProofType
+  eventId: string
+  relevanceScore: number
   epochs: number
   result: UploadResult | null
   onResult: (result: UploadResult) => void
 }
 
-type UploadPhase = 'hashing' | 'uploading' | 'confirming' | 'done'
+type Phase = 'hashing' | 'uploading' | 'signing' | 'confirming' | 'done'
 
-const PHASE_LABELS: Record<UploadPhase, string> = {
+const PHASE_LABELS: Record<Phase, string> = {
   hashing: 'Computing SHA-256 hash…',
   uploading: 'Uploading to Walrus…',
-  confirming: 'Finalizing…',
+  signing: 'Sign the transaction in your wallet…',
+  confirming: 'Confirming on-chain…',
   done: 'Complete!',
 }
 
-async function realUpload(
-  files: File[],
-  description: string,
-  epochs: number,
-  onPhase: (phase: UploadPhase) => void,
-): Promise<UploadResult> {
-  // Phase 1: Hash all content
-  onPhase('hashing')
-  let contentHash: string
-  if (files.length > 0) {
-    contentHash = await hashFile(files[0])
-  } else {
-    contentHash = await hashBytes(new TextEncoder().encode(description))
-  }
+export function UploadStep({
+  files,
+  description,
+  url,
+  proofType,
+  eventId,
+  relevanceScore,
+  epochs,
+  result,
+  onResult,
+}: UploadStepProps) {
+  const [phase, setPhase] = useState<Phase | null>(null)
+  const started = useRef(false)
 
-  // Phase 2: Upload to Walrus
-  onPhase('uploading')
-  let blobId: string
-
-  if (files.length > 1) {
-    // Multi-file: use quilt upload
-    const quiltResult = await uploadQuilt(files, epochs)
-    blobId = quiltResult.quiltId
-  } else if (files.length === 1) {
-    // Single file upload
-    const result = await uploadBlob(files[0], epochs)
-    blobId = result.blobId
-  } else {
-    // Text-only proof: upload description as blob
-    const blob = new Blob([description], { type: 'text/plain' })
-    const file = new File([blob], 'testimony.txt', { type: 'text/plain' })
-    const result = await uploadBlob(file, epochs)
-    blobId = result.blobId
-  }
-
-  // Phase 3: Confirm
-  onPhase('confirming')
-  // On-chain registration will be added when smart contract is deployed
-  const txDigest = `walrus_${blobId.slice(0, 16)}`
-
-  onPhase('done')
-  return { blobId, contentHash, txDigest }
-}
-
-export function UploadStep({ files, description, epochs, result, onResult }: UploadStepProps) {
-  const [phase, setPhase] = useState<UploadPhase | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [started, setStarted] = useState(false)
+  const { submit, error } = useSubmitProof({
+    onPhase: setPhase,
+  })
 
   useEffect(() => {
-    if (started || result) return
+    if (started.current || result) return
+    started.current = true
 
-    setStarted(true)
-    realUpload(files, description, epochs, setPhase)
-      .then(onResult)
-      .catch((err: Error) => setError(err.message))
-  }, [started, result, onResult, files, description, epochs])
+    submit({
+      files,
+      description,
+      url,
+      proofType,
+      eventId,
+      relevanceScore,
+      epochs,
+    }).then(onResult)
+  }, [submit, result, onResult, files, description, url, proofType, eventId, relevanceScore, epochs])
 
   const progress =
     phase === 'hashing'
-      ? 25
+      ? 20
       : phase === 'uploading'
-        ? 60
-        : phase === 'confirming'
-          ? 90
-          : phase === 'done'
-            ? 100
-            : 0
+        ? 50
+        : phase === 'signing'
+          ? 70
+          : phase === 'confirming'
+            ? 90
+            : phase === 'done'
+              ? 100
+              : 0
 
   return (
     <div className="space-y-4">
