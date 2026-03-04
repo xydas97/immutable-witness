@@ -7,6 +7,7 @@ import { PageShell } from '@/components/layout/PageShell'
 import { FilterPanel } from '@/components/map/FilterPanel'
 import { FilterChips } from '@/components/map/FilterChips'
 import { EventDrawer } from '@/components/map/EventDrawer'
+import { ProofSubmissionModal } from '@/components/proof/ProofSubmissionModal'
 import { Spinner } from '@/components/ui/Spinner'
 import type { EventFilter, GdeltEvent } from '@/types'
 
@@ -24,6 +25,7 @@ export default function MapPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const { events, allEvents, isLoading, isError } = useEvents(filter)
   const [selectedEvent, setSelectedEvent] = useState<GdeltEvent | null>(null)
+  const [proofEvent, setProofEvent] = useState<GdeltEvent | null>(null)
 
   const availableCountries = useMemo(
     () => Array.from(new Set(allEvents.map((e) => e.country))).sort(),
@@ -39,8 +41,8 @@ export default function MapPage() {
     setSelectedEvent(event)
   }
 
-  function handleSubmitProof(_event: GdeltEvent) {
-    // TODO: Open ProofSubmissionModal (E2-06)
+  function handleSubmitProof(event: GdeltEvent) {
+    setProofEvent(event)
   }
 
   if (isError) {
@@ -82,6 +84,14 @@ export default function MapPage() {
           onClose={() => setSelectedEvent(null)}
           onSubmitProof={handleSubmitProof}
         />
+
+        {proofEvent && (
+          <ProofSubmissionModal
+            event={proofEvent}
+            isOpen={!!proofEvent}
+            onClose={() => setProofEvent(null)}
+          />
+        )}
       </div>
     </PageShell>
   )
