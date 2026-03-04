@@ -8,6 +8,7 @@ import type { GdeltEvent, Severity, EventFilter } from '@/types'
 
 // --- CAMEO event code lookup (demo-relevant subset) ---
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CAMEO_CODES: Record<string, string> = {
   '14': 'Protest',
   '140': 'Engage in political dissent',
@@ -157,19 +158,21 @@ function resolveCountry(
   sourcecountry: string,
   title: string,
 ): { lat: number; lng: number; iso: string; name: string } {
-  // First try exact match on sourcecountry (GDELT returns full names like "United States")
-  const scLower = (sourcecountry ?? '').toLowerCase().trim()
-  if (scLower && COUNTRY_CENTROIDS[scLower]) {
-    const entry = COUNTRY_CENTROIDS[scLower]
-    return { ...entry, name: sourcecountry }
-  }
-
-  // Fallback: search title text for country names
+  // Priority 1: Extract country from the article title.
+  // This tells us where the event HAPPENED, not where it was published.
+  // sourcecountry is the publisher's country (e.g. CNN → "United States" even for Iran articles).
   const titleLower = (title ?? '').toLowerCase()
   for (const [name, coords] of Object.entries(COUNTRY_CENTROIDS)) {
     if (titleLower.includes(name)) {
       return { ...coords, name: name.charAt(0).toUpperCase() + name.slice(1) }
     }
+  }
+
+  // Priority 2: Fall back to sourcecountry if nothing found in title
+  const scLower = (sourcecountry ?? '').toLowerCase().trim()
+  if (scLower && COUNTRY_CENTROIDS[scLower]) {
+    const entry = COUNTRY_CENTROIDS[scLower]
+    return { ...entry, name: sourcecountry }
   }
 
   return { lat: 0, lng: 0, iso: '', name: '' }
@@ -243,6 +246,10 @@ function getCached(key: string): GdeltEvent[] | null {
 
 function setCache(key: string, data: GdeltEvent[]): void {
   cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS })
+}
+
+export function clearGdeltCache(): void {
+  cache.clear()
 }
 
 // --- GDELT DOC 2.0 API ---
@@ -385,7 +392,10 @@ function formatDateForGdelt(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
-  return `${y}${m}${d}000000`
+  const h = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const s = String(date.getSeconds()).padStart(2, '0')
+  return `${y}${m}${d}${h}${min}${s}`
 }
 
 // Default singleton export

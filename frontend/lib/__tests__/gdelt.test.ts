@@ -1,5 +1,5 @@
 import { normaliseEvent, getSeverityLabel, GdeltService } from '../gdelt'
-import type { GdeltEvent } from '@/types'
+
 
 // --- getSeverityLabel ---
 

@@ -141,7 +141,7 @@ export function ProofViewerModal({ proof, isOpen, onClose }: ProofViewerModalPro
                 <p className="text-sm text-text-muted">
                   This proof contains {content.manifest.patches.length} files:
                 </p>
-                {content.manifest.patches.map((patch, i) => (
+                {content.manifest.patches.map((patch) => (
                   <div
                     key={patch.blobId}
                     className="flex items-center justify-between rounded-lg border border-white/10 bg-background p-3"
