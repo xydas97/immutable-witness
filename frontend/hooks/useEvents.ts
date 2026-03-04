@@ -3,13 +3,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import type { GdeltEvent, EventFilter } from '@/types'
-import { MOCK_EVENTS } from '@/lib/mockData'
 
-// TODO: Replace with real GDELT/NewsAPI service when E1 delivers (INT-01)
 async function fetchEvents(): Promise<GdeltEvent[]> {
-  // Simulate network delay for realistic UX during development
-  await new Promise((resolve) => setTimeout(resolve, 800))
-  return MOCK_EVENTS
+  const res = await fetch('/api/events')
+  if (!res.ok) throw new Error(`Events API returned ${res.status}`)
+  return res.json()
 }
 
 function applyFilters(events: GdeltEvent[], filter: Partial<EventFilter>): GdeltEvent[] {
@@ -38,7 +36,7 @@ export function useEvents(filter?: Partial<EventFilter>) {
   const query = useQuery({
     queryKey: ['events'],
     queryFn: fetchEvents,
-    staleTime: 15 * 60 * 1000, // 15-minute stale time per spec
+    staleTime: 15 * 60 * 1000,
     refetchOnWindowFocus: false,
   })
 
