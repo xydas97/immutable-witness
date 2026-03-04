@@ -3,6 +3,27 @@
 @tailwind utilities;
 
 body {
-  background-color: #0F1923;
-  color: #FFFFFF;
+  background-color: #0f1923;
+  color: #ffffff;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f1923;
+}
+::-webkit-scrollbar-thumb {
+  background: #1a2535;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2a3545;
+}
+
+/* Override dapp-kit modal styles for dark theme */
+[data-dapp-kit] {
+  --dapp-kit-background: #1a2535;
+  --dapp-kit-border-color: rgba(255, 255, 255, 0.1);
 }
