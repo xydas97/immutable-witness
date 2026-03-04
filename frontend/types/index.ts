@@ -36,6 +36,9 @@ export interface WitnessProof {
   description: string
   sourceUrl?: string
   epoch: number
+  endEpoch?: number
+  size?: number
+  mimeType?: string
   timestamp: string
 }
 

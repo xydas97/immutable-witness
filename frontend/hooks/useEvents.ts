@@ -1,11 +1,17 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo } from 'react'
 import type { GdeltEvent, EventFilter } from '@/types'
 
 async function fetchEvents(): Promise<GdeltEvent[]> {
   const res = await fetch('/api/events')
+  if (!res.ok) throw new Error(`Events API returned ${res.status}`)
+  return res.json()
+}
+
+async function fetchEventsFresh(): Promise<GdeltEvent[]> {
+  const res = await fetch('/api/events?force=true')
   if (!res.ok) throw new Error(`Events API returned ${res.status}`)
   return res.json()
 }
@@ -33,12 +39,19 @@ function applyFilters(events: GdeltEvent[], filter: Partial<EventFilter>): Gdelt
 }
 
 export function useEvents(filter?: Partial<EventFilter>) {
+  const queryClient = useQueryClient()
+
   const query = useQuery({
     queryKey: ['events'],
     queryFn: fetchEvents,
     staleTime: 15 * 60 * 1000,
     refetchOnWindowFocus: false,
   })
+
+  const forceRefresh = useCallback(async () => {
+    const freshData = await fetchEventsFresh()
+    queryClient.setQueryData(['events'], freshData)
+  }, [queryClient])
 
   const filteredEvents = useMemo(() => {
     if (!query.data) return []
@@ -51,6 +64,8 @@ export function useEvents(filter?: Partial<EventFilter>) {
     allEvents: query.data ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
+    isRefreshing: query.isFetching,
     refetch: query.refetch,
+    forceRefresh,
   }
 }

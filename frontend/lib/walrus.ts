@@ -14,6 +14,9 @@ const WALRUS_AGGREGATOR_URL =
 export interface BlobUploadResult {
   blobId: string
   cost?: number
+  endEpoch?: number
+  startEpoch?: number
+  size?: number
 }
 
 export async function uploadBlob(file: File, epochs: number = 5): Promise<BlobUploadResult> {
@@ -91,11 +94,26 @@ export async function downloadBlobAsText(blobId: string): Promise<string> {
 
 // --- Estimate ---
 
+// Walrus cost model (derived from testnet observations):
+// - Encoded size = ~64MB fixed metadata overhead + raw_size * ~5x erasure coding
+// - Billable units = ceil(encoded_size / 1 MiB)
+// - Total cost = units * (storage_price_per_unit * epochs + write_price_per_unit)
+//
+// Testnet pricing (epoch 335):
+//   storage_price_per_unit = 1,000 MIST/unit/epoch
+//   write_price_per_unit   = 2,000 MIST/unit (one-time)
+const ENCODING_OVERHEAD_BYTES = 66_034_000
+const ERASURE_CODING_FACTOR = 5
+const STORAGE_PRICE_PER_UNIT = 1_000 // MIST per MiB-unit per epoch
+const WRITE_PRICE_PER_UNIT = 2_000 // MIST per MiB-unit (one-time)
+const UNIT_SIZE = 1_048_576 // 1 MiB
+const MIST_PER_SUI = 1_000_000_000
+
 export function estimateStorageCost(bytes: number, epochs: number): StorageEstimate {
-  // Walrus pricing: ~0.001 SUI per MB per epoch on testnet
-  // This is approximate — real cost comes from the system state
-  const mb = bytes / (1024 * 1024)
-  const estimatedCostSui = Math.max(0.001, mb * 0.001 * epochs)
+  const encodedSize = ENCODING_OVERHEAD_BYTES + bytes * ERASURE_CODING_FACTOR
+  const units = Math.ceil(encodedSize / UNIT_SIZE)
+  const costMist = units * (STORAGE_PRICE_PER_UNIT * epochs + WRITE_PRICE_PER_UNIT)
+  const estimatedCostSui = costMist / MIST_PER_SUI
   return { bytes, estimatedCostSui }
 }
 
