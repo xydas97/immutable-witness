@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -94,6 +95,10 @@ export async function POST(request: NextRequest) {
       })),
     })
 
+    const manifestBytes = new TextEncoder().encode(manifest)
+    const sha256 = createHash('sha256').update(Buffer.from(manifestBytes)).digest('hex')
+    const contentHash = `sha256:${sha256}`
+
     const manifestRes = await fetch(
       `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`,
       {
@@ -127,6 +132,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       quiltId,
+      contentHash,
       patches,
       errors: errors.length > 0 ? errors : undefined,
     })

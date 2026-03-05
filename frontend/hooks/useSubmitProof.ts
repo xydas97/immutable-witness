@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 import { Transaction } from '@mysten/sui/transactions'
-import { uploadBlob, uploadQuilt, hashFile, hashBytes } from '@/lib/walrus'
+import { uploadBlob, uploadQuilt } from '@/lib/walrus'
 import type { ProofType } from '@/types'
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || ''
@@ -41,30 +41,25 @@ export function useSubmitProof({ onPhase }: UseSubmitProofOptions = {}) {
       setError(null)
 
       try {
-        // Phase 1: Hash content
-        onPhase?.('hashing')
-        let contentHash: string
-        if (params.files.length > 0) {
-          contentHash = await hashFile(params.files[0])
-        } else {
-          contentHash = await hashBytes(new TextEncoder().encode(params.description))
-        }
-
-        // Phase 2: Upload to Walrus
+        // Phase 1+2: Upload to Walrus (server computes hash of exact bytes stored)
         onPhase?.('uploading')
         let blobId: string
+        let contentHash: string
 
         if (params.files.length > 1) {
           const quiltResult = await uploadQuilt(params.files, params.epochs)
           blobId = quiltResult.quiltId
+          contentHash = quiltResult.contentHash
         } else if (params.files.length === 1) {
           const result = await uploadBlob(params.files[0], params.epochs)
           blobId = result.blobId
+          contentHash = result.contentHash
         } else {
           const blob = new Blob([params.description], { type: 'text/plain' })
           const file = new File([blob], 'testimony.txt', { type: 'text/plain' })
           const result = await uploadBlob(file, params.epochs)
           blobId = result.blobId
+          contentHash = result.contentHash
         }
 
         // Phase 3: Sign on-chain proof registration

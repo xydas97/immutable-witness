@@ -13,6 +13,7 @@ const WALRUS_AGGREGATOR_URL =
 
 export interface BlobUploadResult {
   blobId: string
+  contentHash: string
   cost?: number
   endEpoch?: number
   startEpoch?: number
@@ -53,6 +54,7 @@ export async function uploadBytes(
 
 export interface QuiltUploadResult {
   quiltId: string
+  contentHash: string
   patches: PatchRecord[]
   errors?: string[]
 }

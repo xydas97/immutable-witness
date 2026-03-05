@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -18,6 +19,11 @@ export async function POST(request: NextRequest) {
     }
 
     const arrayBuffer = await file.arrayBuffer()
+
+    // Hash the exact bytes we send to Walrus so verification always matches
+    const sha256 = createHash('sha256').update(Buffer.from(arrayBuffer)).digest('hex')
+    const contentHash = `sha256:${sha256}`
+
     console.log(`[Walrus] Uploading blob, size: ${arrayBuffer.byteLength} bytes, epochs: ${epochs}`)
 
     const response = await fetch(
@@ -61,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[Walrus] Blob uploaded: ${blobId}, endEpoch: ${endEpoch}, size: ${size}`)
-    return NextResponse.json({ blobId, cost, endEpoch, startEpoch, size })
+    return NextResponse.json({ blobId, contentHash, cost, endEpoch, startEpoch, size })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Upload failed'
     console.error('[Walrus] Upload failed:', msg)
