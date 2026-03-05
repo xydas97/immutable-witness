@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         const arrayBuffer = await file.arrayBuffer()
 
         const response = await fetch(
-          `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}&permanent=true`,
+          `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`,
           {
             method: 'PUT',
             body: arrayBuffer,
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     })
 
     const manifestRes = await fetch(
-      `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}&permanent=true`,
+      `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`,
       {
         method: 'PUT',
         body: new TextEncoder().encode(manifest),

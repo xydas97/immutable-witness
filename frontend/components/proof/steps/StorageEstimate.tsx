@@ -66,8 +66,8 @@ export function StorageEstimate({ totalBytes, epochs, onEpochsChange }: StorageE
       </div>
 
       <p className="text-xs text-text-muted">
-        Evidence is stored permanently on Walrus (non-deletable). Storage duration can be extended
-        later.
+        Evidence is stored on Walrus decentralized storage. Storage duration can be extended later
+        from the My Proofs page.
       </p>
     </div>
   )

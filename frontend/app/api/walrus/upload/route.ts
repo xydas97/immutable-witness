@@ -20,9 +20,8 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer()
     console.log(`[Walrus] Uploading blob, size: ${arrayBuffer.byteLength} bytes, epochs: ${epochs}`)
 
-    // permanent=true ensures blob is non-deletable (since Walrus v1.33 default is deletable)
     const response = await fetch(
-      `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}&permanent=true`,
+      `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`,
       {
         method: 'PUT',
         body: arrayBuffer,
