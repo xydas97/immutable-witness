@@ -3,7 +3,8 @@
 import { useState, useCallback } from 'react'
 import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 import { Transaction } from '@mysten/sui/transactions'
-import { uploadBlob, uploadQuilt } from '@/lib/walrus'
+import { WalrusClient } from '@mysten/walrus'
+import { uploadQuilt } from '@/lib/walrus'
 import type { ProofType } from '@/types'
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || ''
@@ -42,35 +43,72 @@ export function useSubmitProof({ onPhase }: UseSubmitProofOptions = {}) {
       setError(null)
 
       try {
-        // Phase 1+2: Upload to Walrus (server computes hash of exact bytes stored)
-        // Pass sender address so blob ownership transfers to user's wallet (enables deletion)
-        onPhase?.('uploading')
-        const sender = account?.address
+        if (!account?.address) {
+          throw new Error('Wallet not connected')
+        }
+
         let blobId: string
         let contentHash: string
 
         if (params.files.length > 1) {
-          const quiltResult = await uploadQuilt(params.files, params.epochs, sender)
+          // Multi-file quilt — upload via server HTTP publisher
+          onPhase?.('uploading')
+          const quiltResult = await uploadQuilt(params.files, params.epochs, account.address)
           blobId = quiltResult.quiltId
           contentHash = quiltResult.contentHash
-        } else if (params.files.length === 1) {
-          const result = await uploadBlob(params.files[0], params.epochs, sender)
-          blobId = result.blobId
-          contentHash = result.contentHash
         } else {
-          const blob = new Blob([params.description], { type: 'text/plain' })
-          const file = new File([blob], 'testimony.txt', { type: 'text/plain' })
-          const result = await uploadBlob(file, params.epochs, sender)
-          blobId = result.blobId
-          contentHash = result.contentHash
+          // Single file or text-only — use Walrus SDK writeBlobFlow
+          // This registers epochs on-chain directly, guaranteeing correct storage duration
+          let fileBytes: Uint8Array
+
+          if (params.files.length === 1) {
+            fileBytes = new Uint8Array(await params.files[0].arrayBuffer())
+          } else {
+            fileBytes = new TextEncoder().encode(params.description)
+          }
+
+          // Hash the exact bytes we upload
+          onPhase?.('hashing')
+          const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(fileBytes))
+          const hashArray = Array.from(new Uint8Array(hashBuffer))
+          contentHash = 'sha256:' + hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+
+          // Upload via Walrus SDK (encode → register → upload → certify)
+          onPhase?.('uploading')
+          const walrusClient = new WalrusClient({ network: 'testnet', suiClient })
+          const flow = walrusClient.writeBlobFlow({ blob: fileBytes })
+          await flow.encode()
+
+          // Register blob on-chain with correct epochs (wallet signature 1 of 3)
+          const registerTx = flow.register({
+            deletable: true,
+            epochs: params.epochs,
+            owner: account.address,
+          })
+          const registerResult = await signAndExecute({ transaction: registerTx })
+          const registerDigest = 'digest' in registerResult ? registerResult.digest : ''
+
+          // Upload encoded data to Walrus storage nodes
+          await flow.upload({ digest: registerDigest })
+
+          // Certify blob availability on-chain (wallet signature 2 of 3)
+          const certifyTx = flow.certify()
+          const certifyResult = await signAndExecute({ transaction: certifyTx })
+          const certifyDigest = 'digest' in certifyResult ? certifyResult.digest : ''
+
+          if (certifyDigest) {
+            await suiClient.waitForTransaction({ digest: certifyDigest })
+          }
+
+          const blobResult = await flow.getBlob()
+          blobId = blobResult.blobId
         }
 
-        // Phase 3: Sign on-chain proof registration
+        // Register proof on-chain (wallet signature 3 of 3)
         onPhase?.('signing')
         let txDigest = ''
 
         if (CONTRACT_ADDRESS && REGISTRY_OBJECT_ID) {
-          // Build the transaction to register proof on-chain
           const tx = new Transaction()
           tx.moveCall({
             target: `${CONTRACT_ADDRESS}::immutable_witness::submit_proof`,
@@ -90,13 +128,11 @@ export function useSubmitProof({ onPhase }: UseSubmitProofOptions = {}) {
           const result = await signAndExecute({ transaction: tx })
           txDigest = 'digest' in result ? result.digest : ''
 
-          // Phase 4: Wait for confirmation
           onPhase?.('confirming')
           if (txDigest) {
             await suiClient.waitForTransaction({ digest: txDigest })
           }
         } else {
-          // Contract not deployed — skip on-chain registration
           txDigest = `walrus_${blobId.slice(0, 16)}`
           onPhase?.('confirming')
         }
@@ -111,7 +147,7 @@ export function useSubmitProof({ onPhase }: UseSubmitProofOptions = {}) {
         setIsLoading(false)
       }
     },
-    [onPhase, signAndExecute, suiClient],
+    [onPhase, signAndExecute, suiClient, account],
   )
 
   return { submit, isLoading, error }

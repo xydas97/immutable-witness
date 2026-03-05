@@ -27,8 +27,8 @@ type Phase = 'hashing' | 'uploading' | 'signing' | 'confirming' | 'done'
 
 const PHASE_LABELS: Record<Phase, string> = {
   hashing: 'Computing SHA-256 hash…',
-  uploading: 'Uploading to Walrus…',
-  signing: 'Sign the transaction in your wallet…',
+  uploading: 'Uploading to Walrus (2 wallet signatures)…',
+  signing: 'Register proof on-chain (sign in wallet)…',
   confirming: 'Confirming on-chain…',
   done: 'Complete!',
 }
