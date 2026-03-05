@@ -47,9 +47,19 @@ export function useRemoveProof() {
 
         return digest
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Proof removal failed'
+        let msg = err instanceof Error ? err.message : 'Proof removal failed'
+        // Translate on-chain error codes to user-friendly messages
+        if (msg.includes('MoveAbort') && msg.includes(', 3)')) {
+          msg = 'Your wallet is not a moderator or admin. Ask the contract admin to call add_moderator with your address.'
+        } else if (msg.includes('MoveAbort') && msg.includes(', 5)')) {
+          msg = 'Score too high — only proofs with relevance score < 75 can be deleted.'
+        } else if (msg.includes('MoveAbort') && msg.includes(', 6)')) {
+          msg = 'Proof not found on-chain.'
+        } else if (msg.includes('MoveAbort') && msg.includes(', 8)')) {
+          msg = 'Event not found on-chain.'
+        }
         setError(msg)
-        throw err
+        throw new Error(msg)
       } finally {
         setIsLoading(false)
       }

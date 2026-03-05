@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { GdeltEvent, ProofType, RelevanceResult } from '@/types'
 import { TypeSelection } from './steps/TypeSelection'
 import { ContentInput } from './steps/ContentInput'
@@ -31,6 +32,7 @@ interface UploadResult {
 }
 
 export function ProofSubmissionModal({ event, isOpen, onClose }: ProofSubmissionModalProps) {
+  const queryClient = useQueryClient()
   const [step, setStep] = useState(0)
   const [proofType, setProofType] = useState<ProofType | null>(null)
   const [files, setFiles] = useState<File[]>([])
@@ -43,7 +45,10 @@ export function ProofSubmissionModal({ event, isOpen, onClose }: ProofSubmission
   const handleUploadResult = useCallback((result: UploadResult) => {
     setUploadResult(result)
     setStep(5)
-  }, [])
+    // Invalidate proof queries so lists refresh immediately
+    queryClient.invalidateQueries({ queryKey: ['my-proofs'] })
+    queryClient.invalidateQueries({ queryKey: ['proofs', event.id] })
+  }, [queryClient, event.id])
 
   function reset() {
     setStep(0)
