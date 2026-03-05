@@ -20,10 +20,11 @@ export interface BlobUploadResult {
   size?: number
 }
 
-export async function uploadBlob(file: File, epochs: number = 5): Promise<BlobUploadResult> {
+export async function uploadBlob(file: File, epochs: number = 5, senderAddress?: string): Promise<BlobUploadResult> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('epochs', epochs.toString())
+  if (senderAddress) formData.append('senderAddress', senderAddress)
 
   const res = await fetch('/api/walrus/upload', {
     method: 'POST',
@@ -59,9 +60,10 @@ export interface QuiltUploadResult {
   errors?: string[]
 }
 
-export async function uploadQuilt(files: File[], epochs: number = 5): Promise<QuiltUploadResult> {
+export async function uploadQuilt(files: File[], epochs: number = 5, senderAddress?: string): Promise<QuiltUploadResult> {
   const formData = new FormData()
   formData.append('epochs', epochs.toString())
+  if (senderAddress) formData.append('senderAddress', senderAddress)
   for (const file of files) {
     formData.append('files', file)
   }

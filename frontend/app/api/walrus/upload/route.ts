@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File
     const epochs = Number(formData.get('epochs')) || 5
+    const senderAddress = formData.get('senderAddress') as string | null
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -26,8 +27,13 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Walrus] Uploading blob, size: ${arrayBuffer.byteLength} bytes, epochs: ${epochs}`)
 
+    // deletable=true lets the blob owner delete it later
+    // send_object_to transfers blob ownership to the user's wallet
+    const params = new URLSearchParams({ epochs: String(epochs), deletable: 'true' })
+    if (senderAddress) params.set('send_object_to', senderAddress)
+
     const response = await fetch(
-      `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`,
+      `${WALRUS_PUBLISHER_URL}/v1/blobs?${params}`,
       {
         method: 'PUT',
         body: arrayBuffer,

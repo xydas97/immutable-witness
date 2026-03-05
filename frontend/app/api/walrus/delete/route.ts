@@ -3,14 +3,14 @@ import { blobIdToInt } from '@mysten/walrus'
 
 export const dynamic = 'force-dynamic'
 
-const WALRUS_PUBLISHER_URL =
-  process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL ||
-  'https://publisher.walrus-testnet.walrus.space'
-
 const SUI_RPC_URL = 'https://fullnode.testnet.sui.io:443'
 const WALRUS_PKG =
   '0xd84704c17fc870b8764832c535aa6b11f21a95cd6f5bb38a9b07d2cf42220c66'
 
+/**
+ * Find the Blob's Sui Object ID by scanning Walrus events.
+ * The client needs this to build the delete transaction.
+ */
 async function findBlobObjectId(blobId: string): Promise<string | null> {
   try {
     const blobIdInt = blobIdToInt(blobId).toString()
@@ -79,24 +79,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    console.log(`[Walrus Delete] Deleting blob ${blobId} (object: ${blobObjectId})`)
-
-    const res = await fetch(
-      `${WALRUS_PUBLISHER_URL}/v1/blobs/${blobObjectId}`,
-      { method: 'DELETE' },
-    )
-
-    if (!res.ok) {
-      const errorText = await res.text()
-      console.error(`[Walrus Delete] Publisher error: ${res.status} - ${errorText}`)
-      return NextResponse.json(
-        { error: `Walrus delete failed: ${res.status} — ${errorText}` },
-        { status: 502 },
-      )
-    }
-
-    console.log(`[Walrus Delete] Blob ${blobId} deleted successfully`)
-    return NextResponse.json({ success: true, blobObjectId })
+    console.log(`[Walrus Delete] Found blob object: ${blobObjectId} for blobId: ${blobId}`)
+    return NextResponse.json({ blobObjectId })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Delete failed'
     console.error('[Walrus Delete]', msg)

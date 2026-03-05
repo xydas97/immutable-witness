@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 import { Transaction } from '@mysten/sui/transactions'
 import { uploadBlob, uploadQuilt } from '@/lib/walrus'
 import type { ProofType } from '@/types'
@@ -25,6 +25,7 @@ export function useSubmitProof({ onPhase }: UseSubmitProofOptions = {}) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const suiClient = useSuiClient()
+  const account = useCurrentAccount()
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction()
 
   const submit = useCallback(
@@ -42,22 +43,24 @@ export function useSubmitProof({ onPhase }: UseSubmitProofOptions = {}) {
 
       try {
         // Phase 1+2: Upload to Walrus (server computes hash of exact bytes stored)
+        // Pass sender address so blob ownership transfers to user's wallet (enables deletion)
         onPhase?.('uploading')
+        const sender = account?.address
         let blobId: string
         let contentHash: string
 
         if (params.files.length > 1) {
-          const quiltResult = await uploadQuilt(params.files, params.epochs)
+          const quiltResult = await uploadQuilt(params.files, params.epochs, sender)
           blobId = quiltResult.quiltId
           contentHash = quiltResult.contentHash
         } else if (params.files.length === 1) {
-          const result = await uploadBlob(params.files[0], params.epochs)
+          const result = await uploadBlob(params.files[0], params.epochs, sender)
           blobId = result.blobId
           contentHash = result.contentHash
         } else {
           const blob = new Blob([params.description], { type: 'text/plain' })
           const file = new File([blob], 'testimony.txt', { type: 'text/plain' })
-          const result = await uploadBlob(file, params.epochs)
+          const result = await uploadBlob(file, params.epochs, sender)
           blobId = result.blobId
           contentHash = result.contentHash
         }

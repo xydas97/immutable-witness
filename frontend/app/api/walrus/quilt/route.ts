@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const epochs = Number(formData.get('epochs')) || 5
+    const senderAddress = formData.get('senderAddress') as string | null
     const files = formData.getAll('files') as File[]
 
     if (files.length === 0) {
@@ -36,8 +37,11 @@ export async function POST(request: NextRequest) {
       try {
         const arrayBuffer = await file.arrayBuffer()
 
+        const params = new URLSearchParams({ epochs: String(epochs), deletable: 'true' })
+        if (senderAddress) params.set('send_object_to', senderAddress)
+
         const response = await fetch(
-          `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`,
+          `${WALRUS_PUBLISHER_URL}/v1/blobs?${params}`,
           {
             method: 'PUT',
             body: arrayBuffer,
@@ -99,8 +103,11 @@ export async function POST(request: NextRequest) {
     const sha256 = createHash('sha256').update(Buffer.from(manifestBytes)).digest('hex')
     const contentHash = `sha256:${sha256}`
 
+    const manifestParams = new URLSearchParams({ epochs: String(epochs), deletable: 'true' })
+    if (senderAddress) manifestParams.set('send_object_to', senderAddress)
+
     const manifestRes = await fetch(
-      `${WALRUS_PUBLISHER_URL}/v1/blobs?epochs=${epochs}`,
+      `${WALRUS_PUBLISHER_URL}/v1/blobs?${manifestParams}`,
       {
         method: 'PUT',
         body: new TextEncoder().encode(manifest),
