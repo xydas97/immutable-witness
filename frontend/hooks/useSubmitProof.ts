@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react'
 import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 import { Transaction } from '@mysten/sui/transactions'
-import { WalrusClient } from '@mysten/walrus'
 import { uploadQuilt } from '@/lib/walrus'
 import type { ProofType } from '@/types'
 
@@ -75,6 +74,7 @@ export function useSubmitProof({ onPhase }: UseSubmitProofOptions = {}) {
 
           // Upload via Walrus SDK (encode → register → upload → certify)
           onPhase?.('uploading')
+          const { WalrusClient } = await import('@mysten/walrus')
           const walrusClient = new WalrusClient({ network: 'testnet', suiClient })
           const flow = walrusClient.writeBlobFlow({ blob: fileBytes })
           await flow.encode()

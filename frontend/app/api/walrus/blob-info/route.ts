@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { blobIdToInt } from '@mysten/walrus'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +18,7 @@ interface BlobInfoResult {
  * Converts base64url blobId to u256 to match on-chain event data.
  */
 async function findBlobsInfo(blobIds: string[]): Promise<BlobInfoResult[]> {
+  const { blobIdToInt } = await import('@mysten/walrus')
   // Convert all blobIds to their u256 representations for matching
   const idMap = new Map<string, string>() // u256 -> base64url blobId
   for (const blobId of blobIds) {

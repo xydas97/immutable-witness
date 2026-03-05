@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { blobIdToInt } from '@mysten/walrus'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +11,7 @@ const WALRUS_PKG =
  */
 async function findBlobObjectId(blobId: string): Promise<string | null> {
   try {
+    const { blobIdToInt } = await import('@mysten/walrus')
     const blobIdInt = blobIdToInt(blobId).toString()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
