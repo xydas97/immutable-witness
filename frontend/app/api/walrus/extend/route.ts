@@ -6,8 +6,6 @@ export const dynamic = 'force-dynamic'
 const SUI_RPC_URL = 'https://fullnode.testnet.sui.io:443'
 const WALRUS_PKG =
   '0xd84704c17fc870b8764832c535aa6b11f21a95cd6f5bb38a9b07d2cf42220c66'
-const WALRUS_SYSTEM_OBJECT_ID =
-  '0x6c2547cbbc38025cf3adac45f63cb0a8d12ecf777cdc75a4971612bf97fdf6af'
 
 /**
  * Find the Blob's Sui Object ID by scanning BlobCertified events.
@@ -92,13 +90,8 @@ export async function POST(
       )
     }
 
-    // Return the blob object ID and system info for the client to build the PTB
-    return NextResponse.json({
-      blobObjectId,
-      walrusPackage: WALRUS_PKG,
-      systemObjectId: WALRUS_SYSTEM_OBJECT_ID,
-      epochs,
-    })
+    // Return the blob object ID for the client to build the extension via Walrus SDK
+    return NextResponse.json({ blobObjectId })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Extension failed'
     console.error('[Walrus Extend]', msg)

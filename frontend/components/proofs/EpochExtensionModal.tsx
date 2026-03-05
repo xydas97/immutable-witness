@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
-import { Transaction } from '@mysten/sui/transactions'
+import { WalrusClient } from '@mysten/walrus'
 import type { WitnessProof } from '@/types'
 import { useWalrusEpoch } from '@/hooks/useWalrusEpoch'
 import { estimateStorageCost } from '@/lib/walrus'
@@ -63,17 +63,13 @@ export function EpochExtensionModal({ proof, isOpen, onClose }: EpochExtensionMo
         throw new Error(err.error || `Server error: ${res.status}`)
       }
 
-      const { blobObjectId, walrusPackage, systemObjectId } = await res.json()
+      const { blobObjectId } = await res.json()
 
-      // Step 2: Build the extension PTB on the client
-      const tx = new Transaction()
-      tx.moveCall({
-        target: `${walrusPackage}::system::extend_blob`,
-        arguments: [
-          tx.object(systemObjectId),
-          tx.object(blobObjectId),
-          tx.pure.u32(additionalEpochs),
-        ],
+      // Step 2: Build the extension transaction using Walrus SDK
+      const walrusClient = new WalrusClient({ network: 'testnet', suiClient })
+      const tx = await walrusClient.extendBlobTransaction({
+        blobObjectId,
+        epochs: additionalEpochs,
       })
 
       // Step 3: Sign and execute with the user's wallet
