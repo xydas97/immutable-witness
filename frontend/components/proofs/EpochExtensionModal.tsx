@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
-import { WalrusClient } from '@mysten/walrus'
 import type { WitnessProof } from '@/types'
 import { useWalrusEpoch } from '@/hooks/useWalrusEpoch'
 import { estimateStorageCost } from '@/lib/walrus'
@@ -66,6 +65,7 @@ export function EpochExtensionModal({ proof, isOpen, onClose }: EpochExtensionMo
       const { blobObjectId } = await res.json()
 
       // Step 2: Build the extension transaction using Walrus SDK
+      const { WalrusClient } = await import('@mysten/walrus')
       const walrusClient = new WalrusClient({ network: 'testnet', suiClient })
       const tx = await walrusClient.extendBlobTransaction({
         blobObjectId,

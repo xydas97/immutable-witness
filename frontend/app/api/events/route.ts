@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getEvents } from '@/lib/newsapi'
 import { clearGdeltCache } from '@/lib/gdelt'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const force = request.nextUrl.searchParams.get('force') === 'true'

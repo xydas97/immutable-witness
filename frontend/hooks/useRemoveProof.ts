@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react'
 import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
-import { WalrusClient } from '@mysten/walrus'
 
 export function useRemoveProof() {
   const [isLoading, setIsLoading] = useState(false)
@@ -36,6 +35,7 @@ export function useRemoveProof() {
         const { blobObjectId } = await res.json()
 
         // Step 2: Build delete transaction using Walrus SDK
+        const { WalrusClient } = await import('@mysten/walrus')
         const walrusClient = new WalrusClient({ network: 'testnet', suiClient })
         const tx = walrusClient.deleteBlobTransaction({
           blobObjectId,
