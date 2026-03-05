@@ -25,7 +25,7 @@ async function fetchBlobMetadata(
   blobId: string,
 ): Promise<{ size?: number; mimeType?: string }> {
   try {
-    const res = await fetch(`${WALRUS_AGGREGATOR_URL}/v1/blobs/${blobId}`, {
+    const res = await fetch(`${WALRUS_AGGREGATOR_URL}/v1/blobs/${encodeURIComponent(blobId)}`, {
       method: 'HEAD',
     })
     if (!res.ok) return {}

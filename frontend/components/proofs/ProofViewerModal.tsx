@@ -42,7 +42,7 @@ function isTextType(mime: string) {
 
 /** Trigger a proper file download by fetching the blob and creating an object URL */
 async function triggerDownload(blobId: string, filename: string) {
-  const url = `${WALRUS_AGGREGATOR_URL}/v1/blobs/${blobId}`
+  const url = `${WALRUS_AGGREGATOR_URL}/v1/blobs/${encodeURIComponent(blobId)}`
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Download failed: ${res.status}`)
   const blob = await res.blob()
@@ -86,15 +86,22 @@ function detectPdfFromBytes(bytes: Uint8Array): boolean {
 
 export function ProofViewerModal({ proof, isOpen, onClose }: ProofViewerModalProps) {
   const [content, setContent] = useState<ContentState>({ kind: 'loading' })
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     if (!proof || !isOpen) return
     setContent({ kind: 'loading' })
 
+    // Legacy synthetic quilt IDs cannot be fetched
+    if (proof.blobId.startsWith('quilt-')) {
+      setContent({ kind: 'error', message: 'This proof uses a legacy quilt ID that cannot be viewed. Re-upload to create a valid Walrus blob.' })
+      return
+    }
+
     // Track object URLs for cleanup
     let objectUrl: string | null = null
 
-    const blobUrl = `${WALRUS_AGGREGATOR_URL}/v1/blobs/${proof.blobId}`
+    const blobUrl = `${WALRUS_AGGREGATOR_URL}/v1/blobs/${encodeURIComponent(proof.blobId)}`
 
     // Use the mimeType from proof metadata if available (enriched by HEAD request)
     const knownMime = proof.mimeType
@@ -203,7 +210,7 @@ export function ProofViewerModal({ proof, isOpen, onClose }: ProofViewerModalPro
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [proof, isOpen])
+  }, [proof, isOpen, retryCount])
 
   if (!isOpen || !proof) return null
 
@@ -320,8 +327,24 @@ export function ProofViewerModal({ proof, isOpen, onClose }: ProofViewerModalPro
             )}
 
             {content.kind === 'error' && (
-              <div className="rounded-lg border border-red/20 bg-red/10 p-4 text-center">
+              <div className="rounded-lg border border-red/20 bg-red/10 p-4 text-center space-y-3">
                 <p className="text-sm text-red">{content.message}</p>
+                <div className="flex justify-center gap-3">
+                  <button
+                    onClick={() => setRetryCount((c) => c + 1)}
+                    className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
+                  >
+                    Retry
+                  </button>
+                  <a
+                    href={`https://walruscan.com/testnet/blob/${proof.blobId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-teal/20 px-3 py-1.5 text-xs font-medium text-teal hover:bg-teal/30"
+                  >
+                    View on Explorer
+                  </a>
+                </div>
               </div>
             )}
           </div>

@@ -14,9 +14,11 @@ interface ProofTableProps {
   proofs: WitnessProof[]
   onExtend: (proof: WitnessProof) => void
   onView: (proof: WitnessProof) => void
+  onDelete?: (proof: WitnessProof) => void
+  deleteThreshold?: number
 }
 
-export function ProofTable({ proofs, onExtend, onView }: ProofTableProps) {
+export function ProofTable({ proofs, onExtend, onView, onDelete, deleteThreshold = 0 }: ProofTableProps) {
   const [page, setPage] = useState(0)
   const pageSize = 10
   const totalPages = Math.ceil(proofs.length / pageSize)
@@ -123,6 +125,14 @@ export function ProofTable({ proofs, onExtend, onView }: ProofTableProps) {
                     >
                       View
                     </button>
+                    {onDelete && deleteThreshold > 0 && proof.relevanceScore < deleteThreshold && proof.relevanceScore < 75 && (
+                      <button
+                        onClick={() => onDelete(proof)}
+                        className="rounded px-2 py-1 text-xs text-red hover:bg-red/10"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

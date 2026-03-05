@@ -38,8 +38,9 @@ export function EpochExtensionModal({ proof, isOpen, onClose }: EpochExtensionMo
     return Math.max(1, Math.min(available, maxEpochsAhead))
   }, [currentEpoch, blobEndEpoch, maxEpochsAhead])
 
-  const remainingEpochs = (blobEndEpoch !== null && currentEpoch !== null && blobEndEpoch > currentEpoch) ? blobEndEpoch - currentEpoch : 0
-  const newEndEpoch = (blobEndEpoch ?? 0) + additionalEpochs
+  const endEpochKnown = blobEndEpoch !== null && currentEpoch !== null
+  const remainingEpochs = (endEpochKnown && blobEndEpoch > currentEpoch) ? blobEndEpoch - currentEpoch : null
+  const newEndEpoch = endEpochKnown ? blobEndEpoch + additionalEpochs : null
   const blobSize = proof.size ?? 0
   const { estimatedCostSui: extensionCost } = estimateStorageCost(blobSize, additionalEpochs)
 
@@ -127,20 +128,20 @@ export function EpochExtensionModal({ proof, isOpen, onClose }: EpochExtensionMo
                   </div>
                   <div className="rounded-lg border border-white/10 bg-background p-3">
                     <p className="text-xs uppercase text-text-muted">Blob Expires</p>
-                    <p className={`mt-1 text-lg font-semibold ${remainingEpochs <= 5 ? 'text-orange' : 'text-white'}`}>
-                      {blobEndEpoch !== null ? `Epoch ${blobEndEpoch}` : 'Unknown'}
+                    <p className={`mt-1 text-lg font-semibold ${endEpochKnown && remainingEpochs !== null && remainingEpochs <= 5 ? 'text-orange' : 'text-white'}`}>
+                      {endEpochKnown ? `Epoch ${blobEndEpoch}` : 'Not available'}
                     </p>
                   </div>
                   <div className="rounded-lg border border-white/10 bg-background p-3">
                     <p className="text-xs uppercase text-text-muted">Remaining</p>
-                    <p className={`mt-1 text-lg font-semibold ${remainingEpochs <= 5 ? 'text-orange' : 'text-teal'}`}>
-                      {remainingEpochs} epoch{remainingEpochs !== 1 ? 's' : ''}
+                    <p className={`mt-1 text-lg font-semibold ${remainingEpochs !== null && remainingEpochs <= 5 ? 'text-orange' : 'text-teal'}`}>
+                      {remainingEpochs !== null ? `${remainingEpochs} epoch${remainingEpochs !== 1 ? 's' : ''}` : '–'}
                     </p>
                   </div>
                   <div className="rounded-lg border border-white/10 bg-background p-3">
                     <p className="text-xs uppercase text-text-muted">New Expiry</p>
                     <p className="mt-1 text-lg font-semibold text-teal">
-                      Epoch {newEndEpoch}
+                      {newEndEpoch !== null ? `Epoch ${newEndEpoch}` : `+${additionalEpochs} epoch${additionalEpochs !== 1 ? 's' : ''}`}
                     </p>
                   </div>
                 </div>

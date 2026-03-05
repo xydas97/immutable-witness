@@ -36,7 +36,7 @@ async function findBlobsInfo(blobIds: string[]): Promise<BlobInfoResult[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let cursor: any = null
   let pages = 0
-  const MAX_PAGES = 10
+  const MAX_PAGES = 30
 
   while (remaining.size > 0 && pages < MAX_PAGES) {
     const res = await fetch(SUI_RPC_URL, {
@@ -92,6 +92,15 @@ async function findBlobsInfo(blobIds: string[]): Promise<BlobInfoResult[]> {
     if (!data?.result?.hasNextPage) break
     cursor = data.result.nextCursor
     pages++
+
+    // After 15 pages, accept BlobRegistered results and stop searching for those blobs
+    if (pages >= 15) {
+      idMap.forEach((base64Id, u256) => {
+        if (remaining.has(u256) && results.has(base64Id)) {
+          remaining.delete(u256)
+        }
+      })
+    }
   }
 
   // Return results for all requested blobIds (with defaults for not-found)

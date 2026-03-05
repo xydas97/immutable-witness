@@ -14,10 +14,13 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    // Return mock result when Claude API key not configured
+    // Return varied mock scores for demo — some will be deletable (below threshold)
+    const hash = Array.from(body.proofDescription || 'x').reduce((a, c) => a + c.charCodeAt(0), 0)
+    const mockScores = [42, 55, 68, 75, 82, 90, 38, 71, 60, 85]
+    const score = mockScores[hash % mockScores.length]
     return NextResponse.json<RelevanceResult>({
-      score: 75,
-      reason: 'Mock score — configure ANTHROPIC_API_KEY for real AI relevance analysis.',
+      score,
+      reason: `Mock score (${score}/100) — configure ANTHROPIC_API_KEY for real AI relevance analysis.`,
     })
   }
 

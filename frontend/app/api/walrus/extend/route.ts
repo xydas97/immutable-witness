@@ -20,7 +20,7 @@ async function findBlobObjectId(blobId: string): Promise<string | null> {
     let cursor: any = null
     let pages = 0
 
-    while (pages < 10) {
+    while (pages < 30) {
       const res = await fetch(SUI_RPC_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
