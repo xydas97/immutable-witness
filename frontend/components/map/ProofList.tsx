@@ -1,6 +1,12 @@
 'use client'
 
+import { useState } from 'react'
+import { toast } from 'sonner'
 import type { WitnessProof } from '@/types'
+
+const WALRUS_AGGREGATOR_URL =
+  process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL ||
+  'https://aggregator.walrus-testnet.walrus.space'
 
 const TYPE_ICONS: Record<string, string> = {
   file: '📄',
@@ -9,8 +15,8 @@ const TYPE_ICONS: Record<string, string> = {
 }
 
 function statusFromScore(score: number) {
-  if (score >= 75) return { label: 'verified', style: 'bg-teal/20 text-teal' }
-  if (score >= 40) return { label: 'review', style: 'bg-orange/20 text-orange' }
+  if (score >= 75) return { label: 'high', style: 'bg-teal/20 text-teal' }
+  if (score >= 40) return { label: 'medium', style: 'bg-orange/20 text-orange' }
   return { label: 'low', style: 'bg-red/20 text-red' }
 }
 
@@ -20,6 +26,33 @@ interface ProofListProps {
 }
 
 export function ProofList({ proofs, onView }: ProofListProps) {
+  const [verifying, setVerifying] = useState<string | null>(null)
+
+  async function handleVerify(proof: WitnessProof) {
+    setVerifying(proof.blobId)
+    try {
+      const res = await fetch(
+        `${WALRUS_AGGREGATOR_URL}/v1/blobs/${encodeURIComponent(proof.blobId)}`,
+      )
+      if (!res.ok) {
+        toast.error(`Blob not found on Walrus (${res.status})`)
+        return
+      }
+      const buf = await res.arrayBuffer()
+      const hash = await crypto.subtle.digest('SHA-256', buf)
+      const hex = 'sha256:' + Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('')
+      if (hex === proof.contentHash) {
+        toast.success(`Integrity verified — hash matches on-chain record`)
+      } else {
+        toast.error(`Hash mismatch! On-chain: ${proof.contentHash.slice(0, 20)}… Got: ${hex.slice(0, 20)}…`)
+      }
+    } catch {
+      toast.error('Verification failed — could not fetch blob')
+    } finally {
+      setVerifying(null)
+    }
+  }
+
   if (proofs.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-text-muted">
@@ -56,6 +89,13 @@ export function ProofList({ proofs, onView }: ProofListProps) {
               <span>
                 {proof.submitterAddress.slice(0, 6)}…{proof.submitterAddress.slice(-4)}
               </span>
+              <button
+                onClick={() => handleVerify(proof)}
+                disabled={verifying === proof.blobId}
+                className="text-teal hover:underline disabled:opacity-50"
+              >
+                {verifying === proof.blobId ? 'Checking…' : 'Verify'}
+              </button>
               <a
                 href={`https://walruscan.com/testnet/blob/${proof.blobId}`}
                 target="_blank"
