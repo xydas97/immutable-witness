@@ -12,7 +12,7 @@ export function StatsBar({ proofs }: StatsBarProps) {
   const currentEpoch = epochInfo?.currentEpoch ?? null
 
   const totalProofs = proofs.length
-  const verified = proofs.filter((p) => p.relevanceScore >= 75).length
+  const highRelevance = proofs.filter((p) => p.relevanceScore >= 75).length
 
   // Expiring soon: endEpoch is within 10 epochs of current epoch
   const expiringSoon = proofs.filter((p) => {
@@ -27,7 +27,7 @@ export function StatsBar({ proofs }: StatsBarProps) {
 
   const stats = [
     { label: 'Total Proofs', value: totalProofs.toString(), color: 'text-white' },
-    { label: 'Verified', value: verified.toString(), color: 'text-teal' },
+    { label: 'High Relevance', value: highRelevance.toString(), color: 'text-teal' },
     {
       label: 'Storage Used',
       value:

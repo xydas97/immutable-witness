@@ -4,6 +4,10 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import type { WitnessProof } from '@/types'
 
+const WALRUS_AGGREGATOR_URL =
+  process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL ||
+  'https://aggregator.walrus-testnet.walrus.space'
+
 const TYPE_ICONS: Record<string, string> = {
   file: '📄',
   url: '🔗',
@@ -24,14 +28,37 @@ export function ProofTable({ proofs, onExtend, onView, onDelete, deleteThreshold
   const totalPages = Math.ceil(proofs.length / pageSize)
   const pageProofs = proofs.slice(page * pageSize, (page + 1) * pageSize)
 
+  const [verifying, setVerifying] = useState<string | null>(null)
+
   function statusFromScore(score: number) {
-    if (score >= 75) return { label: 'verified', style: 'bg-teal/20 text-teal' }
-    if (score >= 40) return { label: 'review', style: 'bg-orange/20 text-orange' }
+    if (score >= 75) return { label: 'high', style: 'bg-teal/20 text-teal' }
+    if (score >= 40) return { label: 'medium', style: 'bg-orange/20 text-orange' }
     return { label: 'low', style: 'bg-red/20 text-red' }
   }
 
-  function handleVerify(proof: WitnessProof) {
-    toast.success(`Blob ${proof.blobId.slice(0, 8)}… verified on Walrus`)
+  async function handleVerify(proof: WitnessProof) {
+    setVerifying(proof.blobId)
+    try {
+      const res = await fetch(
+        `${WALRUS_AGGREGATOR_URL}/v1/blobs/${encodeURIComponent(proof.blobId)}`,
+      )
+      if (!res.ok) {
+        toast.error(`Blob not found on Walrus (${res.status})`)
+        return
+      }
+      const buf = await res.arrayBuffer()
+      const hash = await crypto.subtle.digest('SHA-256', buf)
+      const hex = 'sha256:' + Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('')
+      if (hex === proof.contentHash) {
+        toast.success(`Integrity verified — hash matches on-chain record`)
+      } else {
+        toast.error(`Hash mismatch! On-chain: ${proof.contentHash.slice(0, 20)}… Got: ${hex.slice(0, 20)}…`)
+      }
+    } catch {
+      toast.error('Verification failed — could not fetch blob')
+    } finally {
+      setVerifying(null)
+    }
   }
 
   if (proofs.length === 0) {
@@ -109,9 +136,10 @@ export function ProofTable({ proofs, onExtend, onView, onDelete, deleteThreshold
                   <div className="flex justify-end gap-1">
                     <button
                       onClick={() => handleVerify(proof)}
-                      className="rounded px-2 py-1 text-xs text-teal hover:bg-teal/10"
+                      disabled={verifying === proof.blobId}
+                      className="rounded px-2 py-1 text-xs text-teal hover:bg-teal/10 disabled:opacity-50"
                     >
-                      Verify
+                      {verifying === proof.blobId ? 'Checking…' : 'Verify'}
                     </button>
                     <button
                       onClick={() => onExtend(proof)}

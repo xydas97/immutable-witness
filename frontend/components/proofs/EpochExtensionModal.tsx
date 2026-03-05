@@ -35,9 +35,10 @@ export function EpochExtensionModal({ proof, isOpen, onClose }: EpochExtensionMo
     if (currentEpoch === null || blobEndEpoch === null) return maxEpochsAhead
     const maxNewEnd = currentEpoch + maxEpochsAhead
     const available = maxNewEnd - blobEndEpoch
-    return Math.max(1, Math.min(available, maxEpochsAhead))
+    return Math.max(0, Math.min(available, maxEpochsAhead))
   }, [currentEpoch, blobEndEpoch, maxEpochsAhead])
 
+  const atMaxStorage = maxExtension <= 0
   const endEpochKnown = blobEndEpoch !== null && currentEpoch !== null
   const remainingEpochs = (endEpochKnown && blobEndEpoch > currentEpoch) ? blobEndEpoch - currentEpoch : null
   const newEndEpoch = endEpochKnown ? blobEndEpoch + additionalEpochs : null
@@ -146,35 +147,46 @@ export function EpochExtensionModal({ proof, isOpen, onClose }: EpochExtensionMo
                   </div>
                 </div>
 
-                {/* Extension slider */}
-                <div>
-                  <label className="mb-2 flex items-center justify-between text-sm">
-                    <span>Additional Epochs</span>
-                    <span className="text-text-muted">
-                      +{additionalEpochs} ({EPOCH_DURATION_LABEL} each)
-                    </span>
-                  </label>
-                  <input
-                    type="range"
-                    min={1}
-                    max={maxExtension}
-                    value={Math.min(additionalEpochs, maxExtension)}
-                    onChange={(e) => setAdditionalEpochs(Number(e.target.value))}
-                    className="w-full accent-teal"
-                  />
-                  <div className="flex justify-between text-xs text-text-muted">
-                    <span>1</span>
-                    <span>{maxExtension} (max)</span>
+                {atMaxStorage ? (
+                  <div className="rounded-lg border border-orange/20 bg-orange/10 p-4 text-center">
+                    <p className="text-sm text-orange font-medium">Already at maximum storage</p>
+                    <p className="mt-1 text-xs text-text-muted">
+                      This blob expires at epoch {blobEndEpoch} which is the furthest the Walrus network allows ({maxEpochsAhead} epochs ahead). No extension possible until closer to expiry.
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    {/* Extension slider */}
+                    <div>
+                      <label className="mb-2 flex items-center justify-between text-sm">
+                        <span>Additional Epochs</span>
+                        <span className="text-text-muted">
+                          +{additionalEpochs} ({EPOCH_DURATION_LABEL} each)
+                        </span>
+                      </label>
+                      <input
+                        type="range"
+                        min={1}
+                        max={maxExtension}
+                        value={Math.min(additionalEpochs, maxExtension)}
+                        onChange={(e) => setAdditionalEpochs(Number(e.target.value))}
+                        className="w-full accent-teal"
+                      />
+                      <div className="flex justify-between text-xs text-text-muted">
+                        <span>1</span>
+                        <span>{maxExtension} (max)</span>
+                      </div>
+                    </div>
 
-                {/* Cost estimate */}
-                <div className="rounded-lg border border-white/10 bg-background p-3">
-                  <p className="text-xs uppercase text-text-muted">Estimated Extension Cost</p>
-                  <p className="mt-1 text-xl font-bold text-teal">
-                    {extensionCost.toFixed(6)} SUI
-                  </p>
-                </div>
+                    {/* Cost estimate */}
+                    <div className="rounded-lg border border-white/10 bg-background p-3">
+                      <p className="text-xs uppercase text-text-muted">Estimated Extension Cost</p>
+                      <p className="mt-1 text-xl font-bold text-teal">
+                        {extensionCost.toFixed(6)} SUI
+                      </p>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -188,7 +200,7 @@ export function EpochExtensionModal({ proof, isOpen, onClose }: EpochExtensionMo
             </button>
             <button
               onClick={handleExtend}
-              disabled={extending || epochLoading}
+              disabled={extending || epochLoading || atMaxStorage}
               className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal/80 disabled:opacity-50"
             >
               {extending ? 'Extending…' : 'Extend Storage'}
