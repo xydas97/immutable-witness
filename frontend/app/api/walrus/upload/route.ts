@@ -72,8 +72,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unexpected Walrus response' }, { status: 502 })
     }
 
-    console.log(`[Walrus] Blob uploaded: ${blobId}, endEpoch: ${endEpoch}, size: ${size}`)
-    return NextResponse.json({ blobId, contentHash, cost, endEpoch, startEpoch, size })
+    const alreadyCertified = !!result.alreadyCertified
+    console.log(`[Walrus] Blob uploaded: ${blobId}, endEpoch: ${endEpoch}, size: ${size}, alreadyCertified: ${alreadyCertified}`)
+    return NextResponse.json({ blobId, contentHash, cost, endEpoch, startEpoch, size, alreadyCertified })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Upload failed'
     console.error('[Walrus] Upload failed:', msg)

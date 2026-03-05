@@ -53,7 +53,9 @@ export function useRemoveProof() {
         return digest
       } catch (err: unknown) {
         let msg = err instanceof Error ? err.message : 'Blob deletion failed'
-        if (msg.includes('ObjectNotFound') || msg.includes('not found')) {
+        if (msg.includes('invalid') && msg.includes('deleted')) {
+          msg = 'This blob has already been deleted.'
+        } else if (msg.includes('ObjectNotFound') || msg.includes('not found')) {
           msg = 'Blob object not found — it may have already been deleted or expired.'
         } else if (msg.includes('IncorrectSigner') || msg.includes('AddressOwnershipMismatch')) {
           msg = 'You do not own this blob. Only blobs uploaded after this update can be deleted.'

@@ -39,7 +39,7 @@ export function ProofSubmissionModal({ event, isOpen, onClose }: ProofSubmission
   const [url, setUrl] = useState('')
   const [description, setDescription] = useState('')
   const [relevanceResult, setRelevanceResult] = useState<RelevanceResult | null>(null)
-  const [epochs, setEpochs] = useState(53) // ~1 year default
+  const [epochs, setEpochs] = useState(5)
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null)
 
   const handleUploadResult = useCallback((result: UploadResult) => {
