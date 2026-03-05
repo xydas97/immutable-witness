@@ -40,12 +40,8 @@ export default function MyProofsPage() {
   async function handleConfirmDelete() {
     if (!deleteProof) return
     try {
-      const digest = await remove({
-        eventId: deleteProof.eventId,
-        submitterAddress: deleteProof.submitterAddress,
-        blobId: deleteProof.blobId,
-      })
-      toast.success(`Proof deleted. Tx: ${digest.slice(0, 12)}…`)
+      await remove({ blobId: deleteProof.blobId })
+      toast.success(`Blob deleted from Walrus storage`)
       setDeleteProof(null)
       queryClient.invalidateQueries({ queryKey: ['my-proofs'] })
     } catch (err: unknown) {
@@ -104,7 +100,7 @@ export default function MyProofsPage() {
             <div>
               <p className="text-sm font-medium">Low-Score Deletion Threshold</p>
               <p className="text-xs text-text-muted">
-                Proofs scoring below {deleteThreshold}% can be deleted (contract enforces &lt;75 max)
+                Proofs scoring below {deleteThreshold}% will show a delete option to remove the blob from Walrus
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -158,7 +154,7 @@ export default function MyProofsPage() {
               </div>
               <div className="space-y-3 px-6 py-4">
                 <p className="text-sm">
-                  Remove this proof from the on-chain registry? This action cannot be undone.
+                  Delete this blob from Walrus storage? The on-chain record will remain but the content will no longer be downloadable.
                 </p>
                 <div className="rounded-lg border border-white/10 bg-background p-3 text-xs">
                   <p className="truncate"><span className="text-text-muted">Description:</span> {deleteProof.description}</p>
